@@ -1,0 +1,86 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.241.1/containers/python-3
+{
+	"name": "{{ cookiecutter.__project_slug }}",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+		"args": {
+			"EXTRA_PACKAGES": "ssh"{% if cookiecutter.include_cuda == "n" -%},
+            // Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
+			// Append -bullseye or -buster to pin to an OS version.
+			// Use -bullseye variants on local on arm64/Apple Silicon.
+			"VARIANT": "{{ cookiecutter.python_version }}-bullseye",
+            // Options
+			"NODE_VERSION": "lts/*"
+            {%- endif %}
+		}
+	},
+	"workspaceMount": "source=${localWorkspaceFolder},target=/code,type=bind,consistency=cached",
+	"workspaceFolder": "/code",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": {
+				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+				"python.venvPath": "${workspaceFolder}/.venv",
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,
+				"python.testing.pytestArgs": [
+					"tests"
+				],
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": false,
+				"python.formatting.autopep8Path": "/home/vscode/.local/bin/autopep8",
+				"python.formatting.blackPath": "/home/vscode/.local/bin/black",
+				"python.formatting.yapfPath": "/home/vscode/.local/bin/yapf",
+				"python.linting.banditPath": "/home/vscode/.local/bin/bandit",
+				"python.linting.mypyPath": "/home/vscode/.local/bin/mypy",
+				"python.linting.pycodestylePath": "/home/vscode/.local/bin/pycodestyle",
+				"python.linting.pydocstylePath": "/home/vscode/.local/bin/pydocstyle",
+				"python.linting.pylintPath": "/home/vscode/.local/bin/pylint",
+				"python.linting.flake8Path": "/home/vscode/.local/bin/flake8",
+				"python.linting.flake8Enabled": true,
+				"python.linting.flake8Args": [
+					"--max-line-length=88",
+					"--max-complexity=18",
+					"--select=B,C,E,F,W,T4,B9",
+					"--per-file-ignores=__init__.py:F401"
+				  ],
+				"isort.args": [
+					"--multi-line=3",
+					"--use-parentheses",
+					"--trailing-comma"
+				],
+				"isort.check": true,
+				"files.trimTrailingWhitespace": true
+			},
+
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.flake8"
+			]
+		}
+	},
+
+    {% if cookiecutter.include_cuda == "y" -%}
+	// remove this section if you either don't have a GPU _or_ dont have the nvidia docker extensions
+	"runArgs": [
+	/*	"--gpus",
+		"all"	*/
+	],
+    {%- endif %}
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postStartCommand' to run commands after the container is created.
+	"postStartCommand": "git config --global --add safe.directory /code && pre-commit install && poetry install --no-root",
+
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "vscode"
+}

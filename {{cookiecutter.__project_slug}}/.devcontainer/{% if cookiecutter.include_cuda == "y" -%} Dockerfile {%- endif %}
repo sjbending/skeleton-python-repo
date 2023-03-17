@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:experimental
+FROM nvidia/cuda:11.6.1-devel-ubuntu20.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Set environment variables - keep these alpha-sorted
+ENV GCLOUD_GPG_FINGERPRINT=8B57C5C2836F4BEB \
+    PYTHONUNBUFFERED=1
+
+# Add github public SSH RSA to prevent fingerprint confirmation
+RUN mkdir -p /etc/ssh && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" > /etc/ssh/ssh_known_hosts
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git \
+        gnupg \
+        python-is-python3 \
+        python3-pip \
+        python{{ cookiecutter.python_version }} \
+        python{{ cookiecutter.python_version }}-dev \
+        python{{ cookiecutter.python_version }}-venv \
+        software-properties-common \
+        ssh
+
+# setup a user called 'vscode'
+RUN useradd -ms /bin/bash vscode && \
+    echo 'vscode  ALL=(ALL) NOPASSWD:ALL' >>  /etc/sudoers && \
+    mkdir /vscode && \
+    chown vscode:vscode /vscode
+
+USER vscode
+WORKDIR /home/vscode
+
+ENV PATH="$PATH:/home/vscode/.local/bin:/vscode/.local/lib/python{{ cookiecutter.python_version }}/site-packages"
+
+RUN pip3 install --upgrade pip && \
+    pip3 install --upgrade 'poetry==1.1.13' setuptools && \
+    pip3 install pre-commit black yapf bandit mypy pycodestyle pydocstyle pylint flake8 isort pytest
+
+{% if "ajax" in cookiecutter.include_libraries.lower() or "bacon" in cookiecutter.include_libraries.lower() -%}
+RUN pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+{%- endif %}
+CMD /bin/bash

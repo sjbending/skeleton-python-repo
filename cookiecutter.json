@@ -1,0 +1,9 @@
+{
+    "project_name": "<Your Project Name>",
+    "__project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "brief_description": "A package for doing a thing",
+    "__project_version": "0.1.0",
+    "python_version": "3.8",
+    "repository_name": "{{ cookiecutter.__project_slug.replace('_', '-') }}",
+    "include_cuda": "y/n?"
+}
